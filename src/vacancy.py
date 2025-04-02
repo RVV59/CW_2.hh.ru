@@ -1,4 +1,4 @@
-from typing import Any
+from typing import List, Dict
 
 
 class Vacancy:
@@ -6,25 +6,18 @@ class Vacancy:
 
     __slots__ = ("title", "url", "salary_from", "salary_to", "currency", "description", "requirements")
 
-    def __init__(self, title: str, url: str, salary: dict, description: str, requirements: str):
-        """
-        Инициализация вакансии
-        :param title: Название вакансии
-        :param url: Ссылка на вакансию
-        :param salary: Информация о зарплате
-        :param description: Описание вакансии
-        :param requirements: Требования к кандидату
-        """
-        self.title = title
-        self.url = url
+    def __init__(self, title: str, url: str, salary: Dict, description: str, requirements: str):
+        """Инициализация вакансии с валидацией данных"""
+        self.title = str(title) if title else "Без названия"
+        self.url = str(url) if url else ""
         self.salary_from = self.__validate_salary(salary.get("from")) if salary else 0
         self.salary_to = self.__validate_salary(salary.get("to")) if salary else 0
-        self.currency = salary.get("currency") if salary else "Не указана"
-        self.description = description
-        self.requirements = requirements
+        self.currency = str(salary.get("currency")) if salary and salary.get("currency") else "RUR"
+        self.description = str(description) if description else ""
+        self.requirements = str(requirements) if requirements else ""
 
-    def __validate_salary(self, salary: Any) -> int:
-        """Приватный метод для валидации зарплаты"""
+    def __validate_salary(self, salary: any) -> int:
+        """Валидация зарплаты"""
         if salary is None:
             return 0
         try:
@@ -34,40 +27,32 @@ class Vacancy:
 
     def __str__(self) -> str:
         return (f"Вакансия: {self.title}\n"
-                f"Зарплата: {self.salary_from} - {self.salary_to} {self.currency}\n"
+                f"Зарплата: {self.salary_from}-{self.salary_to} {self.currency}\n"
                 f"Описание: {self.description[:100]}...\n"
-                f"Требования: {self.requirements[:100]}...\n"
                 f"Ссылка: {self.url}\n")
 
-    def __eq__(self, other) -> bool:
-        if not isinstance(other, Vacancy):
-            return False
-        return self.salary_from == other.salary_from and self.salary_to == other.salary_to
-
-    def __lt__(self, other) -> bool:
-        if not isinstance(other, Vacancy):
-            return NotImplemented
-        return self.salary_from < other.salary_from
-
-    def __gt__(self, other) -> bool:
-        if not isinstance(other, Vacancy):
-            return NotImplemented
-        return self.salary_from > other.salary_from
-
     @classmethod
-    def cast_to_object_list(cls, vacancies_data: list[dict]) -> list['Vacancy']:
+    def cast_to_object_list(cls, vacancies_data: List[Dict]) -> List['Vacancy']:
         """Преобразовать список словарей в список объектов Vacancy"""
-        vacancies = []
-        for vacancy_data in vacancies_data:
-            try:
-                vacancy = cls(
-                    title=vacancy_data.get("name", ""),
-                    url=vacancy_data.get("alternate_url", ""),
-                    salary=vacancy_data.get("salary"),
-                    description=vacancy_data.get("snippet", {}).get("responsibility", ""),
-                    requirements=vacancy_data.get("snippet", {}).get("requirement", "")
-                )
-                vacancies.append(vacancy)
-            except Exception as e:
-                print(f"Ошибка при создании вакансии: {e}")
-        return vacancies
+        return [cls(
+            title=v.get("name", ""),
+            url=v.get("alternate_url", ""),
+            salary=v.get("salary"),
+            description=v.get("snippet", {}).get("responsibility", ""),
+            requirements=v.get("snippet", {}).get("requirement", "")
+        ) for v in vacancies_data]
+
+    def to_dict(self) -> dict:
+        """Преобразует объект Vacancy в словарь для хранения"""
+        return {
+            "title": self.title,
+            "url": self.url,
+            "salary": {
+                "from": self.salary_from,
+                "to": self.salary_to,
+                "currency": self.currency
+            },
+            "description": self.description,
+            "requirements": self.requirements
+        }
+

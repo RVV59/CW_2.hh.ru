@@ -1,5 +1,6 @@
-from abstract_classes import VacancyAPI
 import requests
+from typing import List, Dict
+from src.abstract import VacancyAPI
 
 
 class HeadHunterAPI(VacancyAPI):
@@ -10,24 +11,22 @@ class HeadHunterAPI(VacancyAPI):
         self.__headers = {"User-Agent": "HH-User-Agent"}
 
     def __connect(self) -> None:
-        """Приватный метод для проверки подключения к API"""
+        """Проверка подключения к API"""
         response = requests.get(self.__base_url, headers=self.__headers)
         response.raise_for_status()
 
-    def get_vacancies(self, search_query: str, per_page: int = 100) -> list[dict]:
-        """
-        Получить вакансии по поисковому запросу
-        :param search_query: Поисковый запрос
-        :param per_page: Количество вакансий на странице
-        :return: Список вакансий в формате JSON
-        """
+    def get_vacancies(self, search_query: str) -> List[Dict]:
+        """Получить вакансии по поисковому запросу"""
         self.__connect()
+
         params = {
             "text": search_query,
-            "per_page": per_page,
+            "per_page": 100,
             "area": 113,  # Россия
             "only_with_salary": True
         }
+
         response = requests.get(self.__base_url, headers=self.__headers, params=params)
         response.raise_for_status()
+
         return response.json().get("items", [])
