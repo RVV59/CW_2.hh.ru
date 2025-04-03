@@ -1,1 +1,1 @@
-Vacancies reaserch program
+Vacancies research program
